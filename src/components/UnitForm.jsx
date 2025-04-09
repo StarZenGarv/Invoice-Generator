@@ -1,29 +1,28 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function AddShipTo({ setFormDataList }) {
-  const [formData, setFormData] = useState({
-    name: "",
-    address: "",
-    gstNo: "",
+export default function UnitForm({ setUnitData }) {
+  const [unitFormData, setUnitFormData] = useState({
+    unitName: "",
+    descSpace: "",
   });
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setUnitFormData({ ...unitFormData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const { name, address, gstNo } = formData;
+    const { unitName, descSpace } = unitFormData;
 
-    if (!name || !address || !gstNo) {
+    if (!unitName || !descSpace) {
       alert("All fields are required.");
       return;
     }
 
-    const newEntry = `${name} - ${address} - ${gstNo}`;
-    setFormDataList((prev) =>
+    const newEntry = `${unitName} - ${descSpace}`;
+    setUnitData((prev) =>
       prev.includes(newEntry) ? prev : [...prev, newEntry]
     );
     navigate("/");
@@ -34,27 +33,20 @@ export default function AddShipTo({ setFormDataList }) {
       onSubmit={handleSubmit}
       className="space-y-4 p-4 max-w-xl mx-auto border rounded shadow"
     >
-      <h2 className="text-xl font-bold">Add Shipped To</h2>
+      <h2 className="text-xl font-bold">Add Unit Details</h2>
       <input
-        name="name"
-        placeholder="Name"
-        value={formData.name}
+        name="unitName"
+        placeholder="Unit Name"
+        value={unitFormData.unitName}
         onChange={handleChange}
         className="border p-2 w-full"
       />
       <textarea
-        name="address"
-        placeholder="Address"
-        value={formData.address}
+        name="descSpace"
+        placeholder="Decimal Spaces"
+        value={unitFormData.descSpace}
         onChange={handleChange}
         rows={3}
-        className="border p-2 w-full"
-      />
-      <input
-        name="gstNo"
-        placeholder="GST No"
-        value={formData.gstNo}
-        onChange={handleChange}
         className="border p-2 w-full"
       />
       <button
