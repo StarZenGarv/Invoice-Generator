@@ -4,8 +4,6 @@ import { Routes, Route, BrowserRouter } from "react-router-dom";
 import AddBillTo from "./components/AddBillTo";
 import AddShipTo from "./components/AddShipTo";
 import Invoice from "./components/Invoice";
-import DescriptionForm from "./components/DescriptionForm";
-import UnitForm from "./components/UnitForm";
 
 const App = () => {
   const [invoiceDetails, setInvoiceDetails] = useState({
@@ -40,27 +38,9 @@ const App = () => {
     }
   });
 
-  const [descData, setDescData] = useState(() => {
-    const saved = localStorage.getItem("descData");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [unitData, setUnitData] = useState(() => {
-    const saved = localStorage.getItem("unitData");
-    return saved ? JSON.parse(saved) : [];
-  });
-
   useEffect(() => {
     localStorage.setItem("formDataList", JSON.stringify(formDataList));
   }, [formDataList]);
-
-  useEffect(() => {
-    localStorage.setItem("descData", JSON.stringify(descData));
-  }, [descData]);
-
-  useEffect(() => {
-    localStorage.setItem("unitData", JSON.stringify(unitData));
-  }, [unitData]);
 
   return (
     <BrowserRouter>
@@ -80,8 +60,6 @@ const App = () => {
               tableRows={tableRows}
               setTableRows={setTableRows}
               formDataList={formDataList}
-              descData={descData}
-              unitData={unitData}
             />
           }
         />
@@ -93,11 +71,6 @@ const App = () => {
           path="/shipto"
           element={<AddShipTo setFormDataList={setFormDataList} />}
         />
-        <Route
-          path="/desc"
-          element={<DescriptionForm setDescData={setDescData} />}
-        />
-        <Route path="/unit" element={<UnitForm setUnitData={setUnitData} />} />
         <Route path="/invoice" element={<Invoice />} />
       </Routes>
     </BrowserRouter>
