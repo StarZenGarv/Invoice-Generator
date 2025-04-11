@@ -19,6 +19,19 @@ export default function ResponsiveInvoice() {
     (acc, row) => acc + Number(row.qty || 0),
     0
   );
+
+  const totalCGST = tableRows
+    .reduce((acc, row) => acc + Number(row.cgstAmt || 0), 0)
+    .toFixed(2);
+
+  const totalSGST = tableRows
+    .reduce((acc, row) => acc + Number(row.sgstAmt || 0), 0)
+    .toFixed(2);
+
+  const totalIGST = tableRows
+    .reduce((acc, row) => acc + Number(row.igstAmt || 0), 0)
+    .toFixed(2);
+
   const totalAmt = tableRows
     .reduce((acc, row) => {
       const amt = Number(row.amt || 0);
@@ -103,7 +116,7 @@ export default function ResponsiveInvoice() {
               </div>
               <div>
                 <p>
-                  <span className="font-semibold ">Delivery At:</span>{" "}
+                  <span className="font-semibold">Delivery At:</span>{" "}
                   {transportDetails?.station}
                 </p>
               </div>
@@ -115,6 +128,7 @@ export default function ResponsiveInvoice() {
               </div>
             </div>
           </div>
+
           {/* Row 2 */}
           <div className="grid grid-cols-2 gap-4">
             <div className="border border-gray-400 p-5">
@@ -130,6 +144,7 @@ export default function ResponsiveInvoice() {
               ))}
             </div>
           </div>
+
           {/* Table */}
           <div className="overflow-auto">
             <table className="w-full min-w-[600px] border border-collapse border-gray-700 text-xs">
@@ -168,19 +183,42 @@ export default function ResponsiveInvoice() {
                       {row.per}
                     </td>
                     <td className="border border-gray-700 p-1 text-right">
-                      {row.amt} <br />
-                      <span className="text-xs text-gray-500">
-                        <div>CGST: ₹{row.cgstAmt}</div>
-                        <div>SGST: ₹{row.sgstAmt}</div>
-                        <div>IGST: ₹{row.igstAmt}</div>
-                      </span>
+                      {row.amt}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          {/* Grand Total */};
+
+          {/* GST Summary */}
+          <div className="border border-gray-400 p-4 space-y-2 mt-4 text-sm">
+            <div className="flex justify-between">
+              <span className="font-semibold w-1/3">CGST Total:</span>
+              <span className="text-right w-2/3">₹ {totalCGST}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold w-1/3">SGST Total:</span>
+              <span className="text-right w-2/3">₹ {totalSGST}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold w-1/3">IGST Total:</span>
+              <span className="text-right w-2/3">₹ {totalIGST}</span>
+            </div>
+            <div className="flex justify-between border-t pt-2 mt-2">
+              <span className="font-semibold w-1/3">Total GST:</span>
+              <span className="text-right w-2/3">
+                ₹{" "}
+                {(
+                  parseFloat(totalCGST) +
+                  parseFloat(totalSGST) +
+                  parseFloat(totalIGST)
+                ).toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+          {/* Grand Total */}
           <div className="mt-4 flex flex-col items-end">
             <table className="text-sm w-full md:w-1/2">
               <tbody>

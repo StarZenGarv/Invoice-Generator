@@ -18,6 +18,12 @@ export default function InvoiceForm({
   const navigate = useNavigate();
   const [billedToOptions, setBilledToOptions] = useState([]);
   const [shippedToOptions, setShippedToOptions] = useState([]);
+  const [gstRates, setGstRates] = useState({ cgst: "", sgst: "", igst: "" });
+  const [gstAmounts, setGstAmounts] = useState({
+    cgst: "0.00",
+    sgst: "0.00",
+    igst: "0.00",
+  });
 
   useEffect(() => {
     setBilledToOptions(formDataList);
@@ -158,6 +164,26 @@ export default function InvoiceForm({
       alert("Please fill out all fields.");
     }
   };
+  const totalAmount = tableRows.reduce(
+    (acc, row) => acc + parseFloat(row.amt || 0),
+    0
+  );
+  useEffect(() => {
+    const cgstAmt = (
+      (parseFloat(gstRates.cgst || 0) / 100) *
+      totalAmount
+    ).toFixed(2);
+    const sgstAmt = (
+      (parseFloat(gstRates.sgst || 0) / 100) *
+      totalAmount
+    ).toFixed(2);
+    const igstAmt = (
+      (parseFloat(gstRates.igst || 0) / 100) *
+      totalAmount
+    ).toFixed(2);
+
+    setGstAmounts({ cgst: cgstAmt, sgst: sgstAmt, igst: igstAmt });
+  }, [gstRates, totalAmount]);
 
   return (
     <form
@@ -330,9 +356,6 @@ export default function InvoiceForm({
                 <th className="border p-1">Qty</th>
                 <th className="border p-1">Rate</th>
                 <th className="border p-1">Per</th>
-                <th className="border p-1">CGST %</th>
-                <th className="border p-1">SGST %</th>
-                <th className="border p-1">IGST %</th>
                 <th className="border p-1">Amount ₹</th>
                 <th className="border p-1 w-8"></th>
               </tr>
@@ -383,37 +406,8 @@ export default function InvoiceForm({
                       className="w-full border p-1 text-center"
                     />
                   </td>
-                  <td className="border p-1">
-                    <input
-                      name="cgst"
-                      value={row.cgst}
-                      onChange={(e) => handleTableChange(index, e)}
-                      className="w-full border p-1 text-center"
-                    />
-                  </td>
-                  <td className="border p-1">
-                    <input
-                      name="sgst"
-                      value={row.sgst}
-                      onChange={(e) => handleTableChange(index, e)}
-                      className="w-full border p-1 text-center"
-                    />
-                  </td>
-                  <td className="border p-1">
-                    <input
-                      name="igst"
-                      value={row.igst}
-                      onChange={(e) => handleTableChange(index, e)}
-                      className="w-full border p-1 text-center"
-                    />
-                  </td>
                   <td className="border p-1 text-right w-40">
                     ₹{row.amt} <br />
-                    <span className="text-xs text-gray-500">
-                      <div>CGST: ₹{row.cgstAmt}</div>
-                      <div>SGST: ₹{row.sgstAmt}</div>
-                      <div>IGST: ₹{row.igstAmt}</div>
-                    </span>
                   </td>
                   <td className="border p-1 text-center text-red-600">
                     <button
@@ -427,6 +421,45 @@ export default function InvoiceForm({
               ))}
             </tbody>
           </table>
+        </div>
+        {/* GST Section Below Table */}
+        <div className="border border-gray-400 p-4 space-y-2 mt-4 text-sm">
+          <div className="flex justify-between items-center">
+            <label className="font-semibold w-1/3">CGST %:</label>
+            <input
+              type="number"
+              value={gstRates.cgst}
+              onChange={(e) =>
+                setGstRates({ ...gstRates, cgst: e.target.value })
+              }
+              className="border p-1 w-1/3"
+            />
+            <div className="w-1/3 text-right">₹ {gstAmounts.cgst}</div>
+          </div>
+          <div className="flex justify-between items-center">
+            <label className="font-semibold w-1/3">SGST %:</label>
+            <input
+              type="number"
+              value={gstRates.sgst}
+              onChange={(e) =>
+                setGstRates({ ...gstRates, sgst: e.target.value })
+              }
+              className="border p-1 w-1/3"
+            />
+            <div className="w-1/3 text-right">₹ {gstAmounts.sgst}</div>
+          </div>
+          <div className="flex justify-between items-center">
+            <label className="font-semibold w-1/3">IGST %:</label>
+            <input
+              type="number"
+              value={gstRates.igst}
+              onChange={(e) =>
+                setGstRates({ ...gstRates, igst: e.target.value })
+              }
+              className="border p-1 w-1/3"
+            />
+            <div className="w-1/3 text-right">₹ {gstAmounts.igst}</div>
+          </div>
         </div>
 
         {/* Add Row */}
