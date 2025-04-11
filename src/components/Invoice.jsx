@@ -20,7 +20,13 @@ export default function ResponsiveInvoice() {
     0
   );
   const totalAmt = tableRows
-    .reduce((acc, row) => acc + Number(row.amt || 0), 0)
+    .reduce((acc, row) => {
+      const amt = Number(row.amt || 0);
+      const cgst = Number(row.cgstAmt || 0);
+      const sgst = Number(row.sgstAmt || 0);
+      const igst = Number(row.igstAmt || 0);
+      return acc + amt + cgst + sgst + igst;
+    }, 0)
     .toFixed(2);
 
   const handlePrint = () => {
@@ -109,7 +115,6 @@ export default function ResponsiveInvoice() {
               </div>
             </div>
           </div>
-
           {/* Row 2 */}
           <div className="grid grid-cols-2 gap-4">
             <div className="border border-gray-400 p-5">
@@ -125,7 +130,6 @@ export default function ResponsiveInvoice() {
               ))}
             </div>
           </div>
-
           {/* Table */}
           <div className="overflow-auto">
             <table className="w-full min-w-[600px] border border-collapse border-gray-700 text-xs">
@@ -164,15 +168,19 @@ export default function ResponsiveInvoice() {
                       {row.per}
                     </td>
                     <td className="border border-gray-700 p-1 text-right">
-                      {row.amt}
+                      {row.amt} <br />
+                      <span className="text-xs text-gray-500">
+                        <div>CGST: ₹{row.cgstAmt}</div>
+                        <div>SGST: ₹{row.sgstAmt}</div>
+                        <div>IGST: ₹{row.igstAmt}</div>
+                      </span>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-
-          {/* Grand Total */}
+          {/* Grand Total */};
           <div className="mt-4 flex flex-col items-end">
             <table className="text-sm w-full md:w-1/2">
               <tbody>
