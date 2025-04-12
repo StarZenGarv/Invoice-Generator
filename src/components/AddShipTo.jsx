@@ -17,7 +17,7 @@ export default function AddShipTo({ setFormDataList }) {
     e.preventDefault();
     const { name, address, gstNo } = formData;
 
-    if (!name || !address || !gstNo) {
+    if (!name || !address) {
       alert("All fields are required.");
       return;
     }

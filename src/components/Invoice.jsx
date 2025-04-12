@@ -11,6 +11,8 @@ export default function ResponsiveInvoice() {
     billedTo = "",
     shippedTo = "",
     tableRows = [],
+    gstRates = {},
+    gstAmounts = {},
   } = state || {};
 
   const invoiceRef = useRef();
@@ -20,28 +22,16 @@ export default function ResponsiveInvoice() {
     0
   );
 
-  const totalCGST = tableRows
-    .reduce((acc, row) => acc + Number(row.cgstAmt || 0), 0)
-    .toFixed(2);
+  const totalWithoutGst = tableRows.reduce((acc, row) => {
+    const amt = Number(row.amt || 0);
+    return acc + amt;
+  }, 0);
 
-  const totalSGST = tableRows
-    .reduce((acc, row) => acc + Number(row.sgstAmt || 0), 0)
-    .toFixed(2);
-
-  const totalIGST = tableRows
-    .reduce((acc, row) => acc + Number(row.igstAmt || 0), 0)
-    .toFixed(2);
-
-  const totalAmt = tableRows
-    .reduce((acc, row) => {
-      const amt = Number(row.amt || 0);
-      const cgst = Number(row.cgstAmt || 0);
-      const sgst = Number(row.sgstAmt || 0);
-      const igst = Number(row.igstAmt || 0);
-      return acc + amt + cgst + sgst + igst;
-    }, 0)
-    .toFixed(2);
-
+  const totalGst =
+    parseFloat(gstAmounts.cgst || 0) +
+    parseFloat(gstAmounts.sgst || 0) +
+    parseFloat(gstAmounts.igst || 0);
+  const totalAmt = (totalWithoutGst + totalGst).toFixed(2);
   const handlePrint = () => {
     window.print();
   };
@@ -194,37 +184,53 @@ export default function ResponsiveInvoice() {
           {/* GST Summary */}
           <div className="border border-gray-400 p-4 space-y-2 mt-4 text-sm">
             <div className="flex justify-between">
-              <span className="font-semibold w-1/3">CGST Total:</span>
-              <span className="text-right w-2/3">₹ {totalCGST}</span>
+              <span className="font-semibold w-1/3">
+                CGST ({gstRates.cgst || 0}%)
+              </span>
+              <span className="text-right w-2/3">
+                ₹ {gstAmounts.cgst || "0.00"}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="font-semibold w-1/3">SGST Total:</span>
-              <span className="text-right w-2/3">₹ {totalSGST}</span>
+              <span className="font-semibold w-1/3">
+                SGST ({gstRates.sgst || 0}%)
+              </span>
+              <span className="text-right w-2/3">
+                ₹ {gstAmounts.sgst || "0.00"}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="font-semibold w-1/3">IGST Total:</span>
-              <span className="text-right w-2/3">₹ {totalIGST}</span>
+              <span className="font-semibold w-1/3">
+                IGST ({gstRates.igst || 0}%)
+              </span>
+              <span className="text-right w-2/3">
+                ₹ {gstAmounts.igst || "0.00"}
+              </span>
             </div>
             <div className="flex justify-between border-t pt-2 mt-2">
               <span className="font-semibold w-1/3">Total GST:</span>
               <span className="text-right w-2/3">
                 ₹{" "}
                 {(
-                  parseFloat(totalCGST) +
-                  parseFloat(totalSGST) +
-                  parseFloat(totalIGST)
+                  parseFloat(gstAmounts.cgst || 0) +
+                  parseFloat(gstAmounts.sgst || 0) +
+                  parseFloat(gstAmounts.igst || 0)
                 ).toFixed(2)}
               </span>
             </div>
           </div>
 
           {/* Grand Total */}
-          <div className="mt-4 flex flex-col items-end">
-            <table className="text-sm w-full md:w-1/2">
+          <div className="mt-4 flex flex-col items-end mr-[15px]">
+            <table className="text-sm w-full md:w-1/2 relative">
               <tbody>
                 <tr>
-                  <td className="font-semibold pr-4">Grand Total</td>
-                  <td className="text-right">{totalQty} Pcs.</td>
+                  <td className="font-semibold pr-4 absolute md:-left-[200px]">
+                    Grand Total
+                  </td>
+                  <td className="absolute left-[150px] md:left-[70px]">
+                    {totalQty} Pcs.
+                  </td>
                   <td className="text-right font-bold">₹{totalAmt}</td>
                 </tr>
               </tbody>

@@ -24,6 +24,8 @@ export default function InvoiceForm({
     sgst: "0.00",
     igst: "0.00",
   });
+  const [showBilledDropdown, setShowBilledDropdown] = useState(false);
+  const [showShippedDropdown, setShowShippedDropdown] = useState(false);
 
   useEffect(() => {
     setBilledToOptions(formDataList);
@@ -31,12 +33,8 @@ export default function InvoiceForm({
   }, [formDataList]);
 
   useEffect(() => {
-    if (!billedToOptions.includes(billedTo)) {
-      setBilledTo("");
-    }
-    if (!shippedToOptions.includes(shippedTo)) {
-      setShippedTo("");
-    }
+    if (!billedToOptions.includes(billedTo)) setBilledTo("");
+    if (!shippedToOptions.includes(shippedTo)) setShippedTo("");
   }, [billedTo, shippedTo, billedToOptions, shippedToOptions]);
 
   const handleInvoiceChange = (e) => {
@@ -65,22 +63,17 @@ export default function InvoiceForm({
       const amt = qty * rate;
       updated[index].amt = amt.toFixed(2);
 
-      updated[index].cgstAmt = !isNaN(cgst)
-        ? ((cgst / 100) * amt).toFixed(2)
-        : "";
-      updated[index].sgstAmt = !isNaN(sgst)
-        ? ((sgst / 100) * amt).toFixed(2)
-        : "";
-      updated[index].igstAmt = !isNaN(igst)
-        ? ((igst / 100) * amt).toFixed(2)
-        : "";
+      updated[index].cgstAmt = ((cgst / 100) * amt).toFixed(2);
+
+      updated[index].sgstAmt = ((sgst / 100) * amt).toFixed(2);
+
+      updated[index].igstAmt = ((igst / 100) * amt).toFixed(2);
     } else {
       updated[index].amt = "";
       updated[index].cgstAmt = "";
       updated[index].sgstAmt = "";
       updated[index].igstAmt = "";
     }
-
     setTableRows(updated);
   };
 
@@ -105,7 +98,7 @@ export default function InvoiceForm({
     ]);
   };
 
-  const handleDeleteOption = (option, type) => {
+  const handleDelete = (option, type) => {
     const updatedList = formDataList.filter((item) => item !== option);
     const updatedUniqueList = [...new Set(updatedList)];
 
@@ -127,47 +120,11 @@ export default function InvoiceForm({
     setTableRows(updatedRows);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const filled =
-      invoiceDetails.invoiceNo &&
-      invoiceDetails.dated &&
-      transportDetails.vehicleNo &&
-      transportDetails.station &&
-      transportDetails.ewayBillNo &&
-      billedTo &&
-      shippedTo &&
-      tableRows.every(
-        (row) =>
-          row.description &&
-          row.hsnCode &&
-          row.qty &&
-          row.rate &&
-          row.per &&
-          row.cgst !== "" &&
-          row.sgst !== "" &&
-          row.igst !== "" &&
-          row.amt
-      );
-
-    if (filled) {
-      navigate("/invoice", {
-        state: {
-          invoiceDetails,
-          transportDetails,
-          billedTo,
-          shippedTo,
-          tableRows,
-        },
-      });
-    } else {
-      alert("Please fill out all fields.");
-    }
-  };
   const totalAmount = tableRows.reduce(
     (acc, row) => acc + parseFloat(row.amt || 0),
     0
   );
+
   useEffect(() => {
     const cgstAmt = (
       (parseFloat(gstRates.cgst || 0) / 100) *
@@ -181,9 +138,23 @@ export default function InvoiceForm({
       (parseFloat(gstRates.igst || 0) / 100) *
       totalAmount
     ).toFixed(2);
-
     setGstAmounts({ cgst: cgstAmt, sgst: sgstAmt, igst: igstAmt });
   }, [gstRates, totalAmount]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    navigate("/invoice", {
+      state: {
+        invoiceDetails,
+        transportDetails,
+        billedTo,
+        shippedTo,
+        tableRows,
+        gstRates,
+        gstAmounts,
+      },
+    });
+  };
 
   return (
     <form
@@ -191,14 +162,13 @@ export default function InvoiceForm({
       className="p-4 bg-gray-100 flex flex-col items-center"
     >
       <div className="bg-white w-full max-w-[794px] p-6 border border-black shadow text-sm space-y-6">
-        {/* Header */}
         <div className="text-center mb-4">
           <h2 className="font-bold uppercase underline">Tax Invoice</h2>
           <h3 className="text-xl font-semibold mt-1">GARV JINDAL</h3>
           <p>ZIRAKPUR</p>
         </div>
 
-        {/* Invoice & Transport */}
+        {/* Invoice and Transport */}
         <div className="grid grid-cols-2 gap-4">
           <div className="border border-gray-400 p-5 space-y-2">
             <label className="font-semibold">Invoice No.:</label>
@@ -246,102 +216,107 @@ export default function InvoiceForm({
           </div>
         </div>
 
-        {/* Billed & Shipped To */}
-        <div className="grid grid-cols-2 gap-4">
-          {/* Billed To */}
+        {/* Billed and Shipped To */}
+        <div>
           <div className="border border-gray-400 p-5 space-y-2">
             <label className="font-semibold">Billed To:</label>
-            <select
-              value={billedTo}
-              onChange={(e) => setBilledTo(e.target.value)}
-              className="w-full border p-1 mt-1"
-            >
-              <option value="">Select Billed To</option>
-              {billedToOptions.map((option, idx) => (
-                <option key={idx} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-            <div className="mt-3">
-              <label className="text-xs font-medium text-gray-600 mb-1 block">
-                Manage Options
-              </label>
-              <div className="max-h-40 overflow-y-auto space-y-1">
-                {billedToOptions.map((option, idx) => (
-                  <div
-                    key={idx}
-                    className="flex justify-between items-center bg-gray-50 px-3 py-1 border border-gray-300 rounded shadow-sm"
-                  >
-                    <span className="truncate text-sm text-gray-800">
-                      {option}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteOption(option, "billedTo")}
-                      className="text-gray-500 hover:text-red-600"
-                      title="Delete"
-                    >
-                      <MdDelete className="text-lg" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <Link
-                to="/billto"
-                className="text-blue-600 text-sm underline mt-1 block"
+            <div className="relative inline-block w-full">
+              <button
+                type="button"
+                onClick={() => setShowBilledDropdown(!showBilledDropdown)}
+                className="w-full border p-1 text-left bg-white"
               >
-                + Add Billed To
-              </Link>
+                {billedTo || "Select Billed To"}
+              </button>
+
+              {showBilledDropdown && (
+                <ul className="absolute z-10 bg-white border w-full max-h-40 overflow-auto mt-1 shadow">
+                  {billedToOptions.map((option, idx) => (
+                    <li
+                      key={idx}
+                      className="flex justify-between items-center p-1 hover:bg-gray-100"
+                    >
+                      <span
+                        onClick={() => {
+                          setBilledTo(option);
+                          setShowBilledDropdown(false);
+                        }}
+                        className="cursor-pointer flex-grow"
+                      >
+                        {option}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(option, "billedTo");
+                        }}
+                        className="text-red-600 hover:text-red-800 ml-2"
+                      >
+                        <MdDelete />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
+
+            <Link
+              to="/billto"
+              className="text-blue-600 text-sm underline mt-1 block"
+            >
+              + Add Billed To
+            </Link>
           </div>
 
-          {/* Shipped To */}
           <div className="border border-gray-400 p-5 space-y-2">
             <label className="font-semibold">Shipped To:</label>
-            <select
-              value={shippedTo}
-              onChange={(e) => setShippedTo(e.target.value)}
-              className="w-full border p-1 mt-1"
-            >
-              <option value="">Select Shipped To</option>
-              {shippedToOptions.map((option, idx) => (
-                <option key={idx} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-            <div className="mt-3">
-              <label className="text-xs font-medium text-gray-600 mb-1 block">
-                Manage Options
-              </label>
-              <div className="max-h-40 overflow-y-auto space-y-1">
-                {shippedToOptions.map((option, idx) => (
-                  <div
-                    key={idx}
-                    className="flex justify-between items-center bg-gray-50 px-3 py-1 border border-gray-300 rounded shadow-sm"
-                  >
-                    <span className="truncate text-sm text-gray-800">
-                      {option}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteOption(option, "shippedTo")}
-                      className="text-gray-500 hover:text-red-600"
-                      title="Delete"
-                    >
-                      <MdDelete className="text-lg" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <Link
-                to="/shipto"
-                className="text-blue-600 text-sm underline mt-1 block"
+            <div className="relative inline-block w-full">
+              <button
+                type="button"
+                onClick={() => setShowShippedDropdown(!showShippedDropdown)}
+                className="w-full border p-1 text-left bg-white"
               >
-                + Add Shipped To
-              </Link>
+                {shippedTo || "Select Shipped To"}
+              </button>
+
+              {showShippedDropdown && (
+                <ul className="absolute z-10 bg-white border w-full max-h-40 overflow-auto mt-1 shadow">
+                  {shippedToOptions.map((option, idx) => (
+                    <li
+                      key={idx}
+                      className="flex justify-between items-center p-1 hover:bg-gray-100"
+                    >
+                      <span
+                        onClick={() => {
+                          setShippedTo(option);
+                          setShowShippedDropdown(false);
+                        }}
+                        className="cursor-pointer flex-grow"
+                      >
+                        {option}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(option, "shippedTo");
+                        }}
+                        className="text-red-600 hover:text-red-800 ml-2"
+                      >
+                        <MdDelete />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
+            <Link
+              to="/shipto"
+              className="text-blue-600 text-sm underline mt-1 block"
+            >
+              + Add Shipped To
+            </Link>
           </div>
         </div>
 
@@ -422,47 +397,28 @@ export default function InvoiceForm({
             </tbody>
           </table>
         </div>
-        {/* GST Section Below Table */}
+
+        {/* GST Section */}
         <div className="border border-gray-400 p-4 space-y-2 mt-4 text-sm">
-          <div className="flex justify-between items-center">
-            <label className="font-semibold w-1/3">CGST %:</label>
-            <input
-              type="number"
-              value={gstRates.cgst}
-              onChange={(e) =>
-                setGstRates({ ...gstRates, cgst: e.target.value })
-              }
-              className="border p-1 w-1/3"
-            />
-            <div className="w-1/3 text-right">₹ {gstAmounts.cgst}</div>
-          </div>
-          <div className="flex justify-between items-center">
-            <label className="font-semibold w-1/3">SGST %:</label>
-            <input
-              type="number"
-              value={gstRates.sgst}
-              onChange={(e) =>
-                setGstRates({ ...gstRates, sgst: e.target.value })
-              }
-              className="border p-1 w-1/3"
-            />
-            <div className="w-1/3 text-right">₹ {gstAmounts.sgst}</div>
-          </div>
-          <div className="flex justify-between items-center">
-            <label className="font-semibold w-1/3">IGST %:</label>
-            <input
-              type="number"
-              value={gstRates.igst}
-              onChange={(e) =>
-                setGstRates({ ...gstRates, igst: e.target.value })
-              }
-              className="border p-1 w-1/3"
-            />
-            <div className="w-1/3 text-right">₹ {gstAmounts.igst}</div>
-          </div>
+          {["cgst", "sgst", "igst"].map((tax) => (
+            <div key={tax} className="flex justify-between items-center">
+              <label className="font-semibold w-1/3">
+                {tax.toUpperCase()} %:
+              </label>
+              <input
+                type="number"
+                value={gstRates[tax]}
+                onChange={(e) =>
+                  setGstRates({ ...gstRates, [tax]: e.target.value })
+                }
+                className="border p-1 w-1/3"
+              />
+              <div className="w-1/3 text-right">₹ {gstAmounts[tax]}</div>
+            </div>
+          ))}
         </div>
 
-        {/* Add Row */}
+        {/* Add Row Button */}
         <div className="mt-2">
           <button
             type="button"
@@ -473,7 +429,7 @@ export default function InvoiceForm({
           </button>
         </div>
 
-        {/* Submit */}
+        {/* Submit Button */}
         <div className="flex justify-end">
           <button
             type="submit"

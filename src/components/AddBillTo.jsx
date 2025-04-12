@@ -16,17 +16,13 @@ export default function AddBillTo({ setFormDataList }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     const { name, address, gstNo } = formData;
-
-    if (!name || !address || !gstNo) {
-      alert("All fields are required.");
-      return;
+    if (name || address) {
+      const newEntry = `${name} - ${address} - ${gstNo}`;
+      setFormDataList((prev) =>
+        prev.includes(newEntry) ? prev : [...prev, newEntry]
+      );
+      navigate("/");
     }
-
-    const newEntry = `${name} - ${address} - ${gstNo}`;
-    setFormDataList((prev) =>
-      prev.includes(newEntry) ? prev : [...prev, newEntry]
-    );
-    navigate("/");
   };
 
   return (
