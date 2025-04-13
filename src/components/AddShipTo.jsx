@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function AddShipTo({ setFormDataList }) {
+export default function AddShipTo({ setShippedToList }) {
   const [formData, setFormData] = useState({
     name: "",
     address: "",
-    gstNo: "",
   });
+
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -15,15 +15,13 @@ export default function AddShipTo({ setFormDataList }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const { name, address, gstNo } = formData;
-
-    if (!name || !address) {
-      alert("All fields are required.");
+    const { name, address } = formData;
+    if (!name) {
+      alert("Name is required");
       return;
     }
-
-    const newEntry = `${name} - ${address} - ${gstNo}`;
-    setFormDataList((prev) =>
+    const newEntry = `${name} - ${address}`;
+    setShippedToList((prev) =>
       prev.includes(newEntry) ? prev : [...prev, newEntry]
     );
     navigate("/");
@@ -48,13 +46,6 @@ export default function AddShipTo({ setFormDataList }) {
         value={formData.address}
         onChange={handleChange}
         rows={3}
-        className="border p-2 w-full"
-      />
-      <input
-        name="gstNo"
-        placeholder="GST No"
-        value={formData.gstNo}
-        onChange={handleChange}
         className="border p-2 w-full"
       />
       <button

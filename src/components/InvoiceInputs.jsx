@@ -13,25 +13,33 @@ export default function InvoiceForm({
   setShippedTo,
   tableRows,
   setTableRows,
-  formDataList,
+  formData,
+  setFormData,
 }) {
   const navigate = useNavigate();
+
   const [billedToOptions, setBilledToOptions] = useState([]);
   const [shippedToOptions, setShippedToOptions] = useState([]);
+
   const [gstRates, setGstRates] = useState({ cgst: "", sgst: "", igst: "" });
   const [gstAmounts, setGstAmounts] = useState({
     cgst: "0.00",
     sgst: "0.00",
     igst: "0.00",
   });
+
   const [showBilledDropdown, setShowBilledDropdown] = useState(false);
   const [showShippedDropdown, setShowShippedDropdown] = useState(false);
 
+  // Load billedTo and shippedTo lists from localStorage
   useEffect(() => {
-    setBilledToOptions(formDataList);
-    setShippedToOptions(formDataList);
-  }, [formDataList]);
+    const billedList = JSON.parse(localStorage.getItem("billedToList")) || [];
+    const shippedList = JSON.parse(localStorage.getItem("shippedToList")) || [];
+    setBilledToOptions(billedList);
+    setShippedToOptions(shippedList);
+  }, []);
 
+  // Reset selection if deleted
   useEffect(() => {
     if (!billedToOptions.includes(billedTo)) setBilledTo("");
     if (!shippedToOptions.includes(shippedTo)) setShippedTo("");
@@ -62,55 +70,54 @@ export default function InvoiceForm({
     if (!isNaN(qty) && !isNaN(rate)) {
       const amt = qty * rate;
       updated[index].amt = amt.toFixed(2);
-
       updated[index].cgstAmt = ((cgst / 100) * amt).toFixed(2);
-
       updated[index].sgstAmt = ((sgst / 100) * amt).toFixed(2);
-
       updated[index].igstAmt = ((igst / 100) * amt).toFixed(2);
+
+      const isLastRow = index === updated.length - 1;
+      const fieldsFilled =
+        updated[index].qty !== "" && updated[index].rate !== "";
+
+      if (isLastRow && fieldsFilled) {
+        updated.push({
+          srNo: updated.length + 1,
+          description: "",
+          hsnCode: "",
+          qty: "",
+          rate: "",
+          per: "",
+          cgst: "",
+          sgst: "",
+          igst: "",
+          cgstAmt: "",
+          sgstAmt: "",
+          igstAmt: "",
+          amt: "",
+        });
+      }
     } else {
       updated[index].amt = "";
       updated[index].cgstAmt = "";
       updated[index].sgstAmt = "";
       updated[index].igstAmt = "";
     }
+
     setTableRows(updated);
   };
 
-  const addRow = () => {
-    setTableRows([
-      ...tableRows,
-      {
-        srNo: tableRows.length + 1,
-        description: "",
-        hsnCode: "",
-        qty: "",
-        rate: "",
-        per: "",
-        cgst: "",
-        sgst: "",
-        igst: "",
-        cgstAmt: "",
-        sgstAmt: "",
-        igstAmt: "",
-        amt: "",
-      },
-    ]);
-  };
-
   const handleDelete = (option, type) => {
-    const updatedList = formDataList.filter((item) => item !== option);
-    const updatedUniqueList = [...new Set(updatedList)];
-
     if (type === "billedTo") {
-      setBilledToOptions(updatedUniqueList);
+      const updatedList = billedToOptions.filter((item) => item !== option);
+      setBilledToOptions(updatedList);
       if (billedTo === option) setBilledTo("");
+      localStorage.setItem("billedToList", JSON.stringify(updatedList));
     }
     if (type === "shippedTo") {
-      setShippedToOptions(updatedUniqueList);
+      const updatedList = shippedToOptions.filter((item) => item !== option);
+      setShippedToOptions(updatedList);
       if (shippedTo === option) setShippedTo("");
+      localStorage.setItem("shippedToList", JSON.stringify(updatedList));
     }
-    localStorage.setItem("formDataList", JSON.stringify(updatedUniqueList));
   };
 
   const handleDeleteRow = (indexToDelete) => {
@@ -188,6 +195,7 @@ export default function InvoiceForm({
               className="w-full border p-1 mt-1"
             />
           </div>
+
           <div className="border border-gray-400 p-5 space-y-2">
             <label className="font-semibold">Vehicle No.:</label>
             <input
@@ -216,7 +224,7 @@ export default function InvoiceForm({
           </div>
         </div>
 
-        {/* Billed and Shipped To */}
+        {/* Billed To */}
         <div>
           <div className="border border-gray-400 p-5 space-y-2">
             <label className="font-semibold">Billed To:</label>
@@ -260,7 +268,6 @@ export default function InvoiceForm({
                 </ul>
               )}
             </div>
-
             <Link
               to="/billto"
               className="text-blue-600 text-sm underline mt-1 block"
@@ -269,6 +276,7 @@ export default function InvoiceForm({
             </Link>
           </div>
 
+          {/* Shipped To */}
           <div className="border border-gray-400 p-5 space-y-2">
             <label className="font-semibold">Shipped To:</label>
             <div className="relative inline-block w-full">
@@ -381,9 +389,7 @@ export default function InvoiceForm({
                       className="w-full border p-1 text-center"
                     />
                   </td>
-                  <td className="border p-1 text-right w-40">
-                    ₹{row.amt} <br />
-                  </td>
+                  <td className="border p-1 text-right w-40">₹{row.amt}</td>
                   <td className="border p-1 text-center text-red-600">
                     <button
                       type="button"
@@ -416,17 +422,6 @@ export default function InvoiceForm({
               <div className="w-1/3 text-right">₹ {gstAmounts[tax]}</div>
             </div>
           ))}
-        </div>
-
-        {/* Add Row Button */}
-        <div className="mt-2">
-          <button
-            type="button"
-            onClick={addRow}
-            className="border px-4 py-2 bg-gray-100 hover:bg-gray-200"
-          >
-            Add Row
-          </button>
         </div>
 
         {/* Submit Button */}

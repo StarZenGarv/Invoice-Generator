@@ -15,6 +15,12 @@ const App = () => {
     station: "",
     ewayBillNo: "",
   });
+  const [formData, setFormData] = useState({
+    name: "",
+    address: "",
+    state: "",
+    gstNo: "",
+  });
   const [billedTo, setBilledTo] = useState("");
   const [shippedTo, setShippedTo] = useState("");
   const [tableRows, setTableRows] = useState([
@@ -29,8 +35,17 @@ const App = () => {
     },
   ]);
 
-  const [formDataList, setFormDataList] = useState(() => {
-    const saved = localStorage.getItem("formDataList");
+  const [billedToList, setBilledToList] = useState(() => {
+    const saved = localStorage.getItem("billedToList");
+    try {
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [shippedToList, setShippedToList] = useState(() => {
+    const saved = localStorage.getItem("shippedToList");
     try {
       return saved ? JSON.parse(saved) : [];
     } catch {
@@ -39,8 +54,12 @@ const App = () => {
   });
 
   useEffect(() => {
-    localStorage.setItem("formDataList", JSON.stringify(formDataList));
-  }, [formDataList]);
+    localStorage.setItem("billedToList", JSON.stringify(billedToList));
+  }, [billedToList]);
+
+  useEffect(() => {
+    localStorage.setItem("shippedToList", JSON.stringify(shippedToList));
+  }, [shippedToList]);
 
   return (
     <BrowserRouter>
@@ -59,17 +78,26 @@ const App = () => {
               setShippedTo={setShippedTo}
               tableRows={tableRows}
               setTableRows={setTableRows}
-              formDataList={formDataList}
+              billedToList={billedToList}
+              shippedToList={shippedToList}
+              formData={formData}
+              setFormData={setFormData}
             />
           }
         />
         <Route
           path="/billto"
-          element={<AddBillTo setFormDataList={setFormDataList} />}
+          element={
+            <AddBillTo
+              setBilledToList={setBilledToList}
+              formData={formData}
+              setFormData={setFormData}
+            />
+          }
         />
         <Route
           path="/shipto"
-          element={<AddShipTo setFormDataList={setFormDataList} />}
+          element={<AddShipTo setShippedToList={setShippedToList} />}
         />
         <Route path="/invoice" element={<Invoice />} />
       </Routes>
