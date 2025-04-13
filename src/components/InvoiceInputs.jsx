@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MdDelete } from "react-icons/md";
+import { IoIosArrowDropdownCircle } from "react-icons/io";
 
 export default function InvoiceForm({
   invoiceDetails,
@@ -13,10 +14,21 @@ export default function InvoiceForm({
   setShippedTo,
   tableRows,
   setTableRows,
-  formData,
-  setFormData,
 }) {
   const navigate = useNavigate();
+  const gstTypesToShow = useMemo(() => {
+    if (!billedTo) {
+      return ["cgst", "sgst", "igst"];
+    }
+    const parts = billedTo.split(" - ");
+    const state = parts[2] ? parts[2].trim() : "";
+
+    if (state === "Punjab") {
+      return ["cgst", "sgst"];
+    } else {
+      return ["igst"];
+    }
+  }, [billedTo]);
 
   const [billedToOptions, setBilledToOptions] = useState([]);
   const [shippedToOptions, setShippedToOptions] = useState([]);
@@ -73,28 +85,6 @@ export default function InvoiceForm({
       updated[index].cgstAmt = ((cgst / 100) * amt).toFixed(2);
       updated[index].sgstAmt = ((sgst / 100) * amt).toFixed(2);
       updated[index].igstAmt = ((igst / 100) * amt).toFixed(2);
-
-      const isLastRow = index === updated.length - 1;
-      const fieldsFilled =
-        updated[index].qty !== "" && updated[index].rate !== "";
-
-      if (isLastRow && fieldsFilled) {
-        updated.push({
-          srNo: updated.length + 1,
-          description: "",
-          hsnCode: "",
-          qty: "",
-          rate: "",
-          per: "",
-          cgst: "",
-          sgst: "",
-          igst: "",
-          cgstAmt: "",
-          sgstAmt: "",
-          igstAmt: "",
-          amt: "",
-        });
-      }
     } else {
       updated[index].amt = "";
       updated[index].cgstAmt = "";
@@ -103,6 +93,27 @@ export default function InvoiceForm({
     }
 
     setTableRows(updated);
+  };
+
+  const addRow = () => {
+    setTableRows([
+      ...tableRows,
+      {
+        srNo: tableRows.length + 1,
+        description: "",
+        hsnCode: "",
+        qty: "",
+        rate: "",
+        per: "",
+        cgst: "",
+        sgst: "",
+        igst: "",
+        cgstAmt: "",
+        sgstAmt: "",
+        igstAmt: "",
+        amt: "",
+      },
+    ]);
   };
 
   const handleDelete = (option, type) => {
@@ -150,19 +161,27 @@ export default function InvoiceForm({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    navigate("/invoice", {
-      state: {
-        invoiceDetails,
-        transportDetails,
-        billedTo,
-        shippedTo,
-        tableRows,
-        gstRates,
-        gstAmounts,
-      },
-    });
+    if (billedTo) {
+      navigate("/invoice", {
+        state: {
+          invoiceDetails,
+          transportDetails,
+          billedTo,
+          shippedTo,
+          tableRows,
+          gstRates,
+          gstAmounts,
+        },
+      });
+    } else {
+      alert("Please Select Billed To");
+    }
   };
-
+  const grandTotal =
+    totalAmount +
+    parseFloat(gstAmounts.cgst) +
+    parseFloat(gstAmounts.sgst) +
+    parseFloat(gstAmounts.igst);
   return (
     <form
       onSubmit={handleSubmit}
@@ -225,17 +244,20 @@ export default function InvoiceForm({
         </div>
 
         {/* Billed To */}
-        <div>
+        <div className="grid grid-cols-2 gap-5">
           <div className="border border-gray-400 p-5 space-y-2">
             <label className="font-semibold">Billed To:</label>
             <div className="relative inline-block w-full">
-              <button
-                type="button"
-                onClick={() => setShowBilledDropdown(!showBilledDropdown)}
-                className="w-full border p-1 text-left bg-white"
-              >
-                {billedTo || "Select Billed To"}
-              </button>
+              <div className="flex items-center border p-1 bg-white justify-between w-full">
+                <span>{billedTo || "Select Billed To"}</span>
+                <button
+                  type="button"
+                  onClick={() => setShowBilledDropdown(!showBilledDropdown)}
+                  className="ml-2 text-xl text-blue-600 hover:text-blue-800"
+                >
+                  <IoIosArrowDropdownCircle />
+                </button>
+              </div>
 
               {showBilledDropdown && (
                 <ul className="absolute z-10 bg-white border w-full max-h-40 overflow-auto mt-1 shadow">
@@ -280,13 +302,16 @@ export default function InvoiceForm({
           <div className="border border-gray-400 p-5 space-y-2">
             <label className="font-semibold">Shipped To:</label>
             <div className="relative inline-block w-full">
-              <button
-                type="button"
-                onClick={() => setShowShippedDropdown(!showShippedDropdown)}
-                className="w-full border p-1 text-left bg-white"
-              >
-                {shippedTo || "Select Shipped To"}
-              </button>
+              <div className="flex items-center border p-1 bg-white justify-between w-full">
+                <span>{shippedTo || "Select Shipped To"}</span>
+                <button
+                  type="button"
+                  onClick={() => setShowShippedDropdown(!showShippedDropdown)}
+                  className="ml-2 text-xl text-blue-600 hover:text-blue-800"
+                >
+                  <IoIosArrowDropdownCircle />
+                </button>
+              </div>
 
               {showShippedDropdown && (
                 <ul className="absolute z-10 bg-white border w-full max-h-40 overflow-auto mt-1 shadow">
@@ -403,10 +428,17 @@ export default function InvoiceForm({
             </tbody>
           </table>
         </div>
-
+        {/* Add Row Button */}
+        <button
+          type="button"
+          className="bg-blue-600 text-white px-4 py-2 rounded-2xl hover:bg-blue-700 transition"
+          onClick={addRow}
+        >
+          Add Row
+        </button>
         {/* GST Section */}
         <div className="border border-gray-400 p-4 space-y-2 mt-4 text-sm">
-          {["cgst", "sgst", "igst"].map((tax) => (
+          {gstTypesToShow.map((tax) => (
             <div key={tax} className="flex justify-between items-center">
               <label className="font-semibold w-1/3">
                 {tax.toUpperCase()} %:
@@ -424,6 +456,28 @@ export default function InvoiceForm({
           ))}
         </div>
 
+        {/* Grand Total Section */}
+        <div className="p-2 pr-4 space-y-1 text-sm">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold">GST Total</span>
+            <span className="text-right">
+              ₹
+              {(
+                parseFloat(gstAmounts.cgst) +
+                parseFloat(gstAmounts.sgst) +
+                parseFloat(gstAmounts.igst)
+              ).toFixed(2)}
+            </span>
+          </div>
+          <hr />
+
+          <div className="flex justify-between items-center">
+            <span className="font-semibold">Grand Total</span>
+            <span className="font-bold text-right">
+              ₹{grandTotal.toFixed(2)}
+            </span>
+          </div>
+        </div>
         {/* Submit Button */}
         <div className="flex justify-end">
           <button

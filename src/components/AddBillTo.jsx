@@ -3,7 +3,12 @@ import { useNavigate } from "react-router-dom";
 
 export default function AddBillTo({ setBilledToList, formData, setFormData }) {
   const navigate = useNavigate();
-
+  const [formData, setFormData] = useState({
+    name: "",
+    address: "",
+    state: "",
+    gstNo: "",
+  });
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };

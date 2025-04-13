@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import React, { useRef, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import html2pdf from "html2pdf.js";
 
@@ -27,11 +27,31 @@ export default function ResponsiveInvoice() {
     return acc + amt;
   }, 0);
 
-  const totalGst =
-    parseFloat(gstAmounts.cgst || 0) +
-    parseFloat(gstAmounts.sgst || 0) +
-    parseFloat(gstAmounts.igst || 0);
-  const totalAmt = (totalWithoutGst + totalGst).toFixed(2);
+  // Determine which GST fields to display based on billedTo state.
+  const gstTypesToShow = useMemo(() => {
+    if (!billedTo) {
+      // If no billedTo selected, show all GST fields.
+      return ["cgst", "sgst", "igst"];
+    }
+    // billedTo string is expected as "Name - Address - State"
+    const parts = billedTo.split(" - ");
+    const stateValue = parts[2] ? parts[2].trim() : "";
+    if (stateValue === "Punjab") {
+      // For Punjab, show only CGST and SGST.
+      return ["cgst", "sgst"];
+    } else {
+      // For any other state, show only IGST.
+      return ["igst"];
+    }
+  }, [billedTo]);
+
+  // Calculate total GST from only the visible fields.
+  const totalGST = gstTypesToShow.reduce(
+    (acc, tax) => acc + parseFloat(gstAmounts[tax] || 0),
+    0
+  );
+  const totalAmt = (totalWithoutGst + totalGST).toFixed(2);
+
   const handlePrint = () => {
     window.print();
   };
@@ -129,9 +149,15 @@ export default function ResponsiveInvoice() {
             </div>
             <div className="border border-gray-400 p-5">
               <p className="font-semibold mb-1">Shipped to:</p>
-              {shippedTo?.split(" - ").map((line, idx) => (
-                <p key={idx}>{line}</p>
-              ))}
+
+              {shippedTo
+                ? shippedTo
+                    .split(" - ")
+                    .map((line, idx) => <p key={idx}>{line}</p>)
+                : billedTo &&
+                  billedTo
+                    .split(" - ")
+                    .map((line, idx) => <p key={idx}>{line}</p>)}
             </div>
           </div>
 
@@ -183,40 +209,19 @@ export default function ResponsiveInvoice() {
 
           {/* GST Summary */}
           <div className="border border-gray-400 p-4 space-y-2 mt-4 text-sm">
-            <div className="flex justify-between">
-              <span className="font-semibold w-1/3">
-                CGST ({gstRates.cgst || 0}%)
-              </span>
-              <span className="text-right w-2/3">
-                ₹ {gstAmounts.cgst || "0.00"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-semibold w-1/3">
-                SGST ({gstRates.sgst || 0}%)
-              </span>
-              <span className="text-right w-2/3">
-                ₹ {gstAmounts.sgst || "0.00"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-semibold w-1/3">
-                IGST ({gstRates.igst || 0}%)
-              </span>
-              <span className="text-right w-2/3">
-                ₹ {gstAmounts.igst || "0.00"}
-              </span>
-            </div>
+            {gstTypesToShow.map((tax) => (
+              <div className="flex justify-between" key={tax}>
+                <span className="font-semibold w-1/3">
+                  {tax.toUpperCase()} ({gstRates[tax] || 0}%)
+                </span>
+                <span className="text-right w-2/3">
+                  ₹ {gstAmounts[tax] || "0.00"}
+                </span>
+              </div>
+            ))}
             <div className="flex justify-between border-t pt-2 mt-2">
               <span className="font-semibold w-1/3">Total GST:</span>
-              <span className="text-right w-2/3">
-                ₹{" "}
-                {(
-                  parseFloat(gstAmounts.cgst || 0) +
-                  parseFloat(gstAmounts.sgst || 0) +
-                  parseFloat(gstAmounts.igst || 0)
-                ).toFixed(2)}
-              </span>
+              <span className="text-right w-2/3">₹ {totalGST.toFixed(2)}</span>
             </div>
           </div>
 

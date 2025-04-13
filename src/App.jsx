@@ -15,12 +15,6 @@ const App = () => {
     station: "",
     ewayBillNo: "",
   });
-  const [formData, setFormData] = useState({
-    name: "",
-    address: "",
-    state: "",
-    gstNo: "",
-  });
   const [billedTo, setBilledTo] = useState("");
   const [shippedTo, setShippedTo] = useState("");
   const [tableRows, setTableRows] = useState([
@@ -80,20 +74,12 @@ const App = () => {
               setTableRows={setTableRows}
               billedToList={billedToList}
               shippedToList={shippedToList}
-              formData={formData}
-              setFormData={setFormData}
             />
           }
         />
         <Route
           path="/billto"
-          element={
-            <AddBillTo
-              setBilledToList={setBilledToList}
-              formData={formData}
-              setFormData={setFormData}
-            />
-          }
+          element={<AddBillTo setBilledToList={setBilledToList} />}
         />
         <Route
           path="/shipto"
