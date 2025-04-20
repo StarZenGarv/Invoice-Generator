@@ -7,7 +7,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-BILL FORMAT.pdf
 node_modules
 dist
 dist-ssr
